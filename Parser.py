@@ -15,7 +15,7 @@ def space_parser(data):
 		return([],data[match.end():])
 
 def word_parser(data):
-	match=re.match(r'[a-zA-Z]+',data)   # matches for string and returns a match object 
+	match=re.match(r'[a-zA-Z_]+',data)   # matches for string and returns a match object 
 	if(match):
 		return(data[:match.end()], data[match.end():])
 
@@ -26,6 +26,11 @@ def keyword_parser(data):				# matches for keywords
 
 def mathematic_parser(data):
 	for operator in mathematic_operators:
+		if(data.startswith(operator)):
+			return(data[:len(operator)],data[len(operator):])
+
+def comparison_parser(data):
+	for operator in comparison_operators:
 		if(data.startswith(operator)):
 			return(data[:len(operator)],data[len(operator):])
 
@@ -41,8 +46,8 @@ def parser(data):
 				L.append(output)
 		return(L,data[1:])
 	else:
-		return(space_parser(data) or num_parser(data) or keyword_parser(data) or mathematic_parser(data) or word_parser(data))
+		return(space_parser(data) or num_parser(data) or keyword_parser(data) or mathematic_parser(data) or comparison_parser(data) or word_parser(data))
 
-data="(if (> (val x) 0) (fn (+ (aref A i) 1) (quote (one two))))"
+data="(begin (define circle_area (lambda r (* pi (* r r)))))"
 A,_ = parser(data)
 print(A)
