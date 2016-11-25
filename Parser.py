@@ -1,11 +1,11 @@
 import re
 
-keywords = ['begin','define', 'print', 'if']
-mathematic_operators = ['+','-','*','/','%','>']
-comparison_operators = ['==','!=','<>','<','>','>=','<=']
+keywords = ['begin','define', 'print', 'if', 'update']
+mathematic_operators = ['+','-','*','/','%','=']
+comparison_operators = ['==','!=','<>','<=','>=''<','>']
 
 def num_parser(data):
-    match = re.match(r'\d+',data)       # matches for numbers and returns a match object 
+    match = re.match(r'\d+',data) or  re.match(r'-\d+',data)     # matches for numbers and returns a match object 
     if(match):
         return(int(data[:match.end()]), data[match.end():])
 
@@ -34,6 +34,10 @@ def comparison_parser(data):
         if(data.startswith(operator)):
             return(data[:len(operator)],data[len(operator):])
 
+def comment_parser(data):
+    if(data[0] == '#'):
+        return(data[0],data[1:])
+
 def parser(data):
     if(data[0]=='('):
         L=[]
@@ -46,7 +50,8 @@ def parser(data):
                 L.append(output)
         return(L,data[1:])
     else:
-        return(space_parser(data) or num_parser(data) or keyword_parser(data) or mathematic_parser(data) or comparison_parser(data) or word_parser(data))
+        return(space_parser(data) or num_parser(data) or keyword_parser(data) or comment_parser(data) 
+                                  or mathematic_parser(data) or comparison_parser(data) or word_parser(data))
 
 #data="(begin (define circle_area (lambda r (* pi (* r r)))))"
 #A,_ = parser(data)

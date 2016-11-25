@@ -2,61 +2,71 @@ import math
 import operator as op
 from Parser import parser
 
-def standard_env():
-	env = dict()
-	env.update(vars(math)) # sin, cos, sqrt, pi, ...
-	env.update({
-		'+':op.add, '-':op.sub, '*':op.mul, '/':op.div, 
-		'>':op.gt, '<':op.lt, '>=':op.ge, '<=':op.le, '=':op.eq, 
-		'abs':	 abs,
-		'append':  op.add,  
-		'apply':   apply,
-		'begin':   lambda *x: x[-1],
-		'car':	 lambda x: x[0],
-		'cdr':	 lambda x: x[1:], 
-		'cons':	lambda x,y: [x] + y,
-		'eq?':	 op.is_, 
-		'equal?':  op.eq, 
-		'length':  len, 
-		'list':	lambda *x: list(x), 
-		'list?':   lambda x: isinstance(x,list), 
-		'map':	 map,
-		'max':	 max,
-		'min':	 min,
-		'not':	 op.not_,
-		'null?':   lambda x: x == [], 
-		'number?': lambda x: isinstance(x, Number),   
-		'procedure?': callable,
-		'round':   round,
-		'symbol?': lambda x: isinstance(x, Symbol),
-	})
-	return env
+env = {'+':op.add, '-':op.sub, '*':op.mul, '/':op.floordiv, '%':op.mod,
+        '>':op.gt, '<':op.lt, '>=':op.ge, '<=':op.le, '==':op.eq, 
+        'abs':   abs,
+        'append':  op.add,  
+        #'apply':   apply,
+        'begin':   lambda *x: x[-1],
+        'car':   lambda x: x[0],
+        'cdr':   lambda x: x[1:], 
+        'cons':  lambda x,y: [x] + y,
+        'eq?':   op.is_, 
+        'equal?':  op.eq, 
+        'length':  len, 
+        'list':    lambda *x: list(x), 
+        'list?':   lambda *x: type(x) == list, 
+        'map':   map,
+        'max':   max,
+        'min':   min,
+        'not':   op.not_,
+        'null?':   lambda x: x == [], 
+        'number?': lambda x: type(x)== int,   
+        'round':   round,
+        #'symbol?': lambda x: isinstance(x, Symbol),
+    }
 
-global_env = standard_env()
+env.update(vars(math))
 
-def interpretor(x,env=global_env):
-    if(isinstance(x,str)):
+def interpretor(x,env):
+    if(type(x) == str):
         return(env[x])
-    elif(not isinstance(x,list)):
+    elif(type(x) == int):
         return(x)
-    elif(x[0]=='if'):
-        _,test,correct,incorrect = x
-        if(interpretor(test,env)):
-            a=correct
-        else:
-            a=incorrect
-        return(interpretor(a,env))
+    elif(x[0] == '#'):              
+        pass
+    elif(x[0]=='if'):               
+        return(if_interpretor(x,env))
+    elif(x[0] == 'print'):          
+        print_interpretor(x,env)
+    elif(x[0] == 'update'):
+        _,variable,value = x
+        env[variable] = interpretor(value, env)
     elif(x[0] == 'define'):
         _, variable, value = x
         env[variable]=interpretor(value,env)
     else:
-		operation = env[x[0]]
-		operands = [interpretor(y,env) for y in x[1:]]
-		print(operands)
-		return(operation(*operands))
+        operation = env[x[0]]
+        operands = [interpretor(y,env) for y in x[1:]]  
+        return(operation(*operands))
 
-parsed_output,_=parser("(begin (define r 10) (* pi (* r r)))")
-print(parsed_output)
-print(interpretor(parsed_output,global_env))
+def if_interpretor(x,env):
+    _,test,correct,incorrect = x
+    if(interpretor(test,env)):
+        return(interpretor(correct,env))
+    else:
+        return(interpretor(incorrect,env))
+
+def print_interpretor(x,env):
+    if(type(x[1]) == list):
+        print(' '. join(x[1]))
+    else:
+        for y in x[1:]:
+            print(env[y], end = ' ')
+        print()
+
+parsed_output,_=parser("""(begin (if (number? *) (print (YES))(print (NO))))""")
+#print(parsed_output)
+interpretor(parsed_output,env)
 
 #(if (> (val x) 0) (fn (+ (aref A i) 1) (quote (one two))))
